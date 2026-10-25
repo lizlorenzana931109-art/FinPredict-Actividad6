@@ -46,6 +46,11 @@ BORDER = "#D9E2EC"
 st.markdown(
     f"""
 <style>
+
+/* =========================================================
+   ESTILO GENERAL
+   ========================================================= */
+
 .stApp {{
     background-color: white;
 }}
@@ -58,6 +63,10 @@ st.markdown(
 
 h1, h2, h3 {{
     color: {NAVY};
+    font-family: Arial, Helvetica, sans-serif;
+}}
+
+p, span, div {{
     font-family: Arial, Helvetica, sans-serif;
 }}
 
@@ -88,10 +97,15 @@ h1, h2, h3 {{
 [data-testid="stDataFrame"] {{
     border: 1px solid {BORDER};
     border-radius: 8px;
+    overflow-x: auto;
 }}
 
 div[data-testid="stAlert"] {{
     border-radius: 8px;
+}}
+
+[data-testid="stPlotlyChart"] {{
+    width: 100% !important;
 }}
 
 hr {{
@@ -108,6 +122,162 @@ hr {{
 footer {{
     visibility: hidden;
 }}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1024px) {{
+
+    .block-container {{
+        padding-left: 1.3rem;
+        padding-right: 1.3rem;
+    }}
+
+    h1 {{
+        font-size: 2.2rem !important;
+    }}
+
+    h2 {{
+        font-size: 1.8rem !important;
+    }}
+
+    h3 {{
+        font-size: 1.4rem !important;
+    }}
+
+    [data-testid="stMetric"] {{
+        min-height: 105px;
+        padding: 13px 14px;
+    }}
+
+    [data-testid="stMetricValue"] {{
+        font-size: 1.8rem !important;
+    }}
+}}
+
+
+/* =========================================================
+   MÓVIL
+   ========================================================= */
+
+@media (max-width: 768px) {{
+
+    .block-container {{
+        padding-top: 0.8rem;
+        padding-left: 0.8rem;
+        padding-right: 0.8rem;
+        padding-bottom: 2rem;
+    }}
+
+    h1 {{
+        font-size: 1.75rem !important;
+        line-height: 1.2 !important;
+    }}
+
+    h2 {{
+        font-size: 1.45rem !important;
+        line-height: 1.25 !important;
+    }}
+
+    h3 {{
+        font-size: 1.2rem !important;
+    }}
+
+    p {{
+        font-size: 0.95rem !important;
+        line-height: 1.45 !important;
+    }}
+
+    [data-testid="stCaptionContainer"] {{
+        font-size: 0.76rem !important;
+        letter-spacing: .3px;
+    }}
+
+    [data-testid="stMetric"] {{
+        min-height: 88px;
+        padding: 10px 11px;
+        margin-bottom: 5px;
+    }}
+
+    [data-testid="stMetricLabel"] {{
+        font-size: 0.78rem !important;
+    }}
+
+    [data-testid="stMetricValue"] {{
+        font-size: 1.5rem !important;
+    }}
+
+    div[data-testid="stAlert"] {{
+        padding: 0.85rem !important;
+    }}
+
+    div[data-testid="stAlert"] p {{
+        font-size: 0.9rem !important;
+    }}
+
+    [data-testid="stDataFrame"] {{
+        font-size: 0.75rem !important;
+        max-width: 100%;
+        overflow-x: auto !important;
+    }}
+
+    [data-testid="stPlotlyChart"] {{
+        width: 100% !important;
+        overflow-x: hidden;
+    }}
+
+    hr {{
+        margin: 22px 0;
+    }}
+
+    /* Reduce espacios entre bloques */
+    [data-testid="stVerticalBlock"] {{
+        gap: 0.75rem;
+    }}
+
+    /* Botones / sliders más cómodos */
+    [data-testid="stSlider"] {{
+        padding-left: 0.2rem;
+        padding-right: 0.2rem;
+    }}
+
+    /* Expander móvil */
+    [data-testid="stExpander"] {{
+        font-size: 0.9rem;
+    }}
+}}
+
+
+/* =========================================================
+   MÓVIL PEQUEÑO
+   ========================================================= */
+
+@media (max-width: 480px) {{
+
+    .block-container {{
+        padding-left: 0.55rem;
+        padding-right: 0.55rem;
+    }}
+
+    h1 {{
+        font-size: 1.55rem !important;
+    }}
+
+    h2 {{
+        font-size: 1.3rem !important;
+    }}
+
+    [data-testid="stMetricValue"] {{
+        font-size: 1.35rem !important;
+    }}
+
+    [data-testid="stMetricLabel"] {{
+        font-size: 0.72rem !important;
+    }}
+}}
+
 </style>
 """,
     unsafe_allow_html=True
@@ -155,7 +325,6 @@ def crear_matriz_confusion(
     tp,
     titulo
 ):
-
     matriz = np.array([
         [tn, fp],
         [fn, tp]
@@ -185,7 +354,7 @@ def crear_matriz_confusion(
             ],
             text=textos,
             texttemplate="%{text}",
-            textfont=dict(size=22),
+            textfont=dict(size=20),
             colorscale=[
                 [0, "#EEF3F8"],
                 [1, TEAL]
@@ -196,19 +365,16 @@ def crear_matriz_confusion(
 
     fig.update_layout(
         title=titulo,
-        height=450,
+        height=430,
         template="plotly_white",
         margin=dict(
-            l=30,
-            r=30,
-            t=70,
-            b=30
+            l=20,
+            r=20,
+            t=65,
+            b=25
         )
     )
 
-    # Orden estándar:
-    # TN | FP
-    # FN | TP
     fig.update_yaxes(
         autorange="reversed"
     )
@@ -497,8 +663,14 @@ fig_modelos.update_layout(
     xaxis_title="",
     yaxis_title="Valor",
     legend_title="Modelo",
-    height=430,
-    template="plotly_white"
+    height=400,
+    template="plotly_white",
+    margin=dict(
+        l=20,
+        r=20,
+        t=60,
+        b=30
+    )
 )
 
 st.plotly_chart(
@@ -708,8 +880,14 @@ fig_threshold.update_layout(
         tickformat=".0%",
         range=[0, 1]
     ),
-    height=440,
-    template="plotly_white"
+    height=410,
+    template="plotly_white",
+    margin=dict(
+        l=20,
+        r=20,
+        t=60,
+        b=35
+    )
 )
 
 st.plotly_chart(
@@ -963,7 +1141,13 @@ with col_roc:
             "Tasa de verdaderos positivos"
         ),
         template="plotly_white",
-        height=450
+        height=420,
+        margin=dict(
+            l=20,
+            r=20,
+            t=60,
+            b=35
+        )
     )
 
     st.plotly_chart(
@@ -1008,7 +1192,13 @@ with col_pr:
         xaxis_title="Recall",
         yaxis_title="Precision",
         template="plotly_white",
-        height=450
+        height=420,
+        margin=dict(
+            l=20,
+            r=20,
+            t=60,
+            b=35
+        )
     )
 
     st.plotly_chart(
@@ -1106,8 +1296,14 @@ fig_ab.update_layout(
         ticksuffix="%"
     ),
     template="plotly_white",
-    height=430,
-    showlegend=False
+    height=400,
+    showlegend=False,
+    margin=dict(
+        l=20,
+        r=20,
+        t=60,
+        b=30
+    )
 )
 
 st.plotly_chart(
