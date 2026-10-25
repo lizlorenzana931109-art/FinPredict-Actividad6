@@ -50,19 +50,16 @@ st.markdown(
     f"""
     <style>
 
-    /* Fondo general */
     .stApp {{
         background-color: {WHITE};
     }}
 
-    /* Contenedor principal */
     .block-container {{
         padding-top: 1.6rem;
         padding-bottom: 3rem;
         max-width: 1500px;
     }}
 
-    /* Tipografía */
     h1, h2, h3 {{
         color: {NAVY};
         font-family: Arial, Helvetica, sans-serif;
@@ -72,7 +69,6 @@ st.markdown(
         font-family: Arial, Helvetica, sans-serif;
     }}
 
-    /* Ocultar elementos de Streamlit */
     #MainMenu {{
         visibility: hidden;
     }}
@@ -81,7 +77,6 @@ st.markdown(
         visibility: hidden;
     }}
 
-    /* Encabezado principal */
     .fin-header {{
         border-top: 4px solid {TEAL};
         border-bottom: 1px solid {BORDER};
@@ -112,7 +107,6 @@ st.markdown(
         line-height: 1.5;
     }}
 
-    /* Caja ejecutiva */
     .executive-box {{
         background-color: {TEAL_LIGHT};
         border-left: 7px solid {TEAL};
@@ -122,7 +116,6 @@ st.markdown(
         color: {NAVY};
     }}
 
-    /* Nota metodológica */
     .method-box {{
         background-color: #F0F4F8;
         border: 1px solid {BORDER};
@@ -132,7 +125,6 @@ st.markdown(
         margin-top: 10px;
     }}
 
-    /* KPI cards */
     [data-testid="stMetric"] {{
         background-color: {LIGHT};
         border: 1px solid {BORDER};
@@ -151,13 +143,11 @@ st.markdown(
         font-weight: 750;
     }}
 
-    /* Dataframes */
     [data-testid="stDataFrame"] {{
         border: 1px solid {BORDER};
         border-radius: 8px;
     }}
 
-    /* Separadores */
     hr {{
         border: none;
         height: 1px;
@@ -165,7 +155,6 @@ st.markdown(
         margin: 32px 0;
     }}
 
-    /* Footer */
     .fin-footer {{
         margin-top: 35px;
         padding-top: 14px;
@@ -214,6 +203,73 @@ def numero(valor):
     return f"{int(valor):,}"
 
 
+def crear_matriz_confusion(
+    tn,
+    fp,
+    fn,
+    tp,
+    titulo
+):
+
+    matriz = np.array([
+        [tn, fp],
+        [fn, tp]
+    ])
+
+    textos = np.array([
+        [
+            f"TN<br>{tn:,}",
+            f"FP<br>{fp:,}"
+        ],
+        [
+            f"FN<br>{fn:,}",
+            f"TP<br>{tp:,}"
+        ]
+    ])
+
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=matriz,
+            x=[
+                "Predicción: No incumplimiento",
+                "Predicción: Incumplimiento"
+            ],
+            y=[
+                "Real: No incumplimiento",
+                "Real: Incumplimiento"
+            ],
+            text=textos,
+            texttemplate="%{text}",
+            textfont=dict(
+                size=22
+            ),
+            colorscale=[
+                [0, "#EEF3F8"],
+                [1, TEAL]
+            ],
+            showscale=False
+        )
+    )
+
+    fig.update_layout(
+        title=titulo,
+        height=450,
+        template="plotly_white",
+        margin=dict(
+            l=30,
+            r=30,
+            t=70,
+            b=30
+        )
+    )
+
+    fig.update_yaxes(
+        autorange="reversed"
+    )
+
+    return fig
+
+
 # ============================================================
 # 5. CARGA DE RESULTADOS
 # ============================================================
@@ -255,24 +311,26 @@ df_impacto = cargar_csv(
 # 6. ENCABEZADO
 # ============================================================
 
-st.markdown(
-    """
-    <div class="fin-header">
-        <div class="fin-kicker">
-            FINCOMERCIAL, S.A. · FINPREDICT · ACTIVIDAD 6
-        </div>
-
-        <div class="fin-title">
-            Tablero ejecutivo de evaluación y validación
-        </div>
-
-        <div class="fin-subtitle">
-            Evaluación del modelo de riesgo hipotecario mediante
-            validación temporal, análisis estadístico, ajuste de
-            threshold, holdout independiente y simulación A/B.
-        </div>
+header_html = f"""
+<div class="fin-header">
+    <div class="fin-kicker">
+        FINCOMERCIAL, S.A. · FINPREDICT · ACTIVIDAD 6
     </div>
-    """,
+
+    <div class="fin-title">
+        Tablero ejecutivo de evaluación y validación
+    </div>
+
+    <div class="fin-subtitle">
+        Evaluación del modelo de riesgo hipotecario mediante
+        validación temporal, análisis estadístico, ajuste de
+        threshold, holdout independiente y simulación A/B.
+    </div>
+</div>
+"""
+
+st.markdown(
+    header_html,
     unsafe_allow_html=True
 )
 
@@ -326,7 +384,9 @@ with c2:
 with c3:
     st.metric(
         "Recall",
-        porcentaje(fila_holdout["recall"])
+        porcentaje(
+            fila_holdout["recall"]
+        )
     )
 
 c4, c5, c6 = st.columns(3)
@@ -334,20 +394,26 @@ c4, c5, c6 = st.columns(3)
 with c4:
     st.metric(
         "Precision",
-        porcentaje(fila_holdout["precision"])
+        porcentaje(
+            fila_holdout["precision"]
+        )
     )
 
 with c5:
     st.metric(
         "F1-score",
-        porcentaje(fila_holdout["f1"])
+        porcentaje(
+            fila_holdout["f1"]
+        )
     )
 
 with c6:
     st.metric(
         "Cartera priorizada",
         porcentaje(
-            fila_holdout["porcentaje_priorizado"]
+            fila_holdout[
+                "porcentaje_priorizado"
+            ]
         )
     )
 
@@ -357,13 +423,19 @@ st.markdown(
     <div class="method-box">
 
     En el holdout final, FinPredict prioriza
-    <strong>{numero(fila_holdout['casos_priorizados'])} créditos</strong>
+    <strong>
+    {numero(fila_holdout['casos_priorizados'])} créditos
+    </strong>
     de una cartera de 33,603 observaciones.
 
     El modelo identifica
-    <strong>{numero(fila_holdout['tp'])} incumplimientos futuros</strong>
+    <strong>
+    {numero(fila_holdout['tp'])} incumplimientos futuros
+    </strong>
     y mantiene una especificidad de
-    <strong>{porcentaje(fila_holdout['specificity'])}</strong>.
+    <strong>
+    {porcentaje(fila_holdout['specificity'])}
+    </strong>.
 
     </div>
     """,
@@ -411,7 +483,9 @@ for columna in [
 ]:
     df_cv_tabla[columna] = (
         df_cv_tabla[columna]
-        .map(lambda x: f"{x:.2%}")
+        .map(
+            lambda x: f"{x:.2%}"
+        )
     )
 
 for columna in [
@@ -420,7 +494,9 @@ for columna in [
 ]:
     df_cv_tabla[columna] = (
         df_cv_tabla[columna]
-        .map(lambda x: f"{x:.4f}")
+        .map(
+            lambda x: f"{x:.4f}"
+        )
     )
 
 df_cv_tabla.columns = [
@@ -466,9 +542,15 @@ nombres_metricas = {
     "pr_auc": "PR-AUC"
 }
 
-df_plot_modelos["Métrica"] = (
-    df_plot_modelos["Métrica"]
-    .map(nombres_metricas)
+df_plot_modelos[
+    "Métrica"
+] = (
+    df_plot_modelos[
+        "Métrica"
+    ]
+    .map(
+        nombres_metricas
+    )
 )
 
 fig_modelos = px.bar(
@@ -485,7 +567,10 @@ fig_modelos = px.bar(
 )
 
 fig_modelos.update_layout(
-    title="Comparación de desempeño en validación temporal",
+    title=(
+        "Comparación de desempeño "
+        "en validación temporal"
+    ),
     xaxis_title="",
     yaxis_title="Valor",
     legend_title="Modelo",
@@ -503,14 +588,20 @@ st.plotly_chart(
 # 10. COMPARACIÓN ESTADÍSTICA
 # ============================================================
 
-st.markdown("### Comparación estadística")
+st.markdown(
+    "### Comparación estadística"
+)
 
 fila_pr = df_bootstrap[
-    df_bootstrap["metrica"] == "PR-AUC"
+    df_bootstrap[
+        "metrica"
+    ] == "PR-AUC"
 ].iloc[0]
 
 fila_roc = df_bootstrap[
-    df_bootstrap["metrica"] == "ROC-AUC"
+    df_bootstrap[
+        "metrica"
+    ] == "ROC-AUC"
 ].iloc[0]
 
 
@@ -543,25 +634,31 @@ st.markdown(
 
     La diferencia de PR-AUC se calculó como:
 
-    <strong>Regresión Logística − Random Forest.</strong>
+    <strong>
+    Regresión Logística − Random Forest.
+    </strong>
 
     La diferencia media fue
-    <strong>{fila_pr['diferencia_media']:.4f}</strong>,
+    <strong>
+    {fila_pr['diferencia_media']:.4f}
+    </strong>,
     con IC95%
     <strong>
     [{fila_pr['IC_95_inf']:.4f},
     {fila_pr['IC_95_sup']:.4f}]
     </strong>.
 
-    Como el intervalo no contiene cero, la ventaja en PR-AUC
-    es consistente a favor de Regresión Logística.
+    Como el intervalo no contiene cero,
+    la ventaja en PR-AUC es consistente
+    a favor de Regresión Logística.
 
     Para ROC-AUC, el IC95% fue
     <strong>
     [{fila_roc['IC_95_inf']:.4f},
     {fila_roc['IC_95_sup']:.4f}]
     </strong>,
-    por lo que no se identifica una superioridad concluyente.
+    por lo que no se identifica una
+    superioridad concluyente.
 
     </div>
     """,
@@ -576,15 +673,20 @@ st.divider()
 # 11. ANÁLISIS INTERACTIVO DE THRESHOLD
 # ============================================================
 
-st.markdown("## 3. Threshold y capacidad operativa")
+st.markdown(
+    "## 3. Threshold y capacidad operativa"
+)
 
 st.write(
-    "El threshold modifica el equilibrio entre detección de "
-    "incumplimientos y volumen de créditos enviados a intervención."
+    "El threshold modifica el equilibrio entre detección "
+    "de incumplimientos y volumen de créditos enviados "
+    "a intervención."
 )
 
 thresholds_disponibles = sorted(
-    df_threshold["threshold"].unique()
+    df_threshold[
+        "threshold"
+    ].unique()
 )
 
 threshold_seleccionado = st.select_slider(
@@ -595,7 +697,9 @@ threshold_seleccionado = st.select_slider(
 
 fila_threshold = df_threshold[
     np.isclose(
-        df_threshold["threshold"],
+        df_threshold[
+            "threshold"
+        ],
         threshold_seleccionado
     )
 ].iloc[0]
@@ -607,7 +711,9 @@ with t1:
     st.metric(
         "Precision",
         porcentaje(
-            fila_threshold["precision"]
+            fila_threshold[
+                "precision"
+            ]
         )
     )
 
@@ -615,7 +721,9 @@ with t2:
     st.metric(
         "Recall",
         porcentaje(
-            fila_threshold["recall"]
+            fila_threshold[
+                "recall"
+            ]
         )
     )
 
@@ -623,7 +731,9 @@ with t3:
     st.metric(
         "F1-score",
         porcentaje(
-            fila_threshold["f1"]
+            fila_threshold[
+                "f1"
+            ]
         )
     )
 
@@ -646,31 +756,49 @@ fig_threshold = go.Figure()
 
 fig_threshold.add_trace(
     go.Scatter(
-        x=df_threshold["threshold"],
-        y=df_threshold["precision"],
+        x=df_threshold[
+            "threshold"
+        ],
+        y=df_threshold[
+            "precision"
+        ],
         mode="lines+markers",
         name="Precision",
-        line=dict(color=NAVY)
+        line=dict(
+            color=NAVY
+        )
     )
 )
 
 fig_threshold.add_trace(
     go.Scatter(
-        x=df_threshold["threshold"],
-        y=df_threshold["recall"],
+        x=df_threshold[
+            "threshold"
+        ],
+        y=df_threshold[
+            "recall"
+        ],
         mode="lines+markers",
         name="Recall",
-        line=dict(color=TEAL)
+        line=dict(
+            color=TEAL
+        )
     )
 )
 
 fig_threshold.add_trace(
     go.Scatter(
-        x=df_threshold["threshold"],
-        y=df_threshold["f1"],
+        x=df_threshold[
+            "threshold"
+        ],
+        y=df_threshold[
+            "f1"
+        ],
         mode="lines+markers",
         name="F1",
-        line=dict(color="#7A6FF0")
+        line=dict(
+            color="#7A6FF0"
+        )
     )
 )
 
@@ -678,12 +806,17 @@ fig_threshold.add_vline(
     x=0.75,
     line_dash="dash",
     line_color=TEAL,
-    annotation_text="Threshold operativo 0.75",
+    annotation_text=(
+        "Threshold operativo 0.75"
+    ),
     annotation_position="top right"
 )
 
 fig_threshold.update_layout(
-    title="Trade-off entre métricas según threshold",
+    title=(
+        "Trade-off entre métricas "
+        "según threshold"
+    ),
     xaxis_title="Threshold",
     yaxis_title="Valor",
     yaxis=dict(
@@ -701,67 +834,59 @@ st.plotly_chart(
 
 
 # ============================================================
-# 12. MATRIZ DE CONFUSIÓN DINÁMICA
+# 12. MATRIZ OOF PARA ANÁLISIS DE THRESHOLD
 # ============================================================
 
-st.markdown("### Matriz de confusión")
+st.markdown(
+    "### Matriz de confusión OOF · "
+    "Análisis de threshold"
+)
 
-tn = int(fila_threshold["tn"])
-fp = int(fila_threshold["fp"])
-fn = int(fila_threshold["fn"])
-tp = int(fila_threshold["tp"])
+st.caption(
+    "Esta matriz corresponde a las predicciones "
+    "out-of-fold utilizadas para seleccionar el threshold. "
+    "La evaluación final independiente se presenta "
+    "posteriormente sobre el holdout."
+)
 
-matriz = np.array([
-    [tn, fp],
-    [fn, tp]
-])
-
-textos = np.array([
-    [
-        f"TN<br>{tn:,}",
-        f"FP<br>{fp:,}"
-    ],
-    [
-        f"FN<br>{fn:,}",
-        f"TP<br>{tp:,}"
+tn_oof = int(
+    fila_threshold[
+        "tn"
     ]
-])
+)
 
-fig_cm = go.Figure(
-    data=go.Heatmap(
-        z=matriz,
-        x=[
-            "Predicción: No incumplimiento",
-            "Predicción: Incumplimiento"
-        ],
-        y=[
-            "Real: No incumplimiento",
-            "Real: Incumplimiento"
-        ],
-        text=textos,
-        texttemplate="%{text}",
-        textfont=dict(
-            size=22
-        ),
-        colorscale=[
-            [0, "#EEF3F8"],
-            [1, TEAL]
-        ],
-        showscale=False
+fp_oof = int(
+    fila_threshold[
+        "fp"
+    ]
+)
+
+fn_oof = int(
+    fila_threshold[
+        "fn"
+    ]
+)
+
+tp_oof = int(
+    fila_threshold[
+        "tp"
+    ]
+)
+
+
+fig_cm_oof = crear_matriz_confusion(
+    tn=tn_oof,
+    fp=fp_oof,
+    fn=fn_oof,
+    tp=tp_oof,
+    titulo=(
+        "Matriz de confusión OOF · "
+        f"Threshold {threshold_seleccionado:.2f}"
     )
 )
 
-fig_cm.update_layout(
-    title=(
-        "Matriz de confusión · "
-        f"Threshold {threshold_seleccionado:.2f}"
-    ),
-    height=450,
-    template="plotly_white"
-)
-
 st.plotly_chart(
-    fig_cm,
+    fig_cm_oof,
     use_container_width=True
 )
 
@@ -771,21 +896,32 @@ st.markdown(
     <div class="method-box">
 
     Con threshold
-    <strong>{threshold_seleccionado:.2f}</strong>,
+    <strong>
+    {threshold_seleccionado:.2f}
+    </strong>,
     el modelo identifica
-    <strong>{tp:,}</strong>
+    <strong>
+    {tp_oof:,}
+    </strong>
     incumplimientos y deja sin detectar
-    <strong>{fn:,}</strong>.
+    <strong>
+    {fn_oof:,}
+    </strong>.
 
     Se generan
-    <strong>{fp:,}</strong>
-    alertas preventivas adicionales y se priorizan
-    <strong>{int(fila_threshold['casos_priorizados']):,}</strong>
+    <strong>
+    {fp_oof:,}
+    </strong>
+    alertas preventivas adicionales
+    y se priorizan
+    <strong>
+    {int(fila_threshold['casos_priorizados']):,}
+    </strong>
     créditos, equivalentes al
     <strong>
     {fila_threshold['porcentaje_priorizado']:.2%}
     </strong>
-    del universo analizado.
+    del universo OOF analizado.
 
     </div>
     """,
@@ -800,16 +936,143 @@ st.divider()
 # 13. HOLDOUT FINAL
 # ============================================================
 
-st.markdown("## 4. Evaluación final independiente")
+st.markdown(
+    "## 4. Evaluación final independiente"
+)
 
 st.write(
-    "El modelo y el threshold fueron congelados antes de utilizar "
-    "el conjunto holdout."
+    "El modelo y el threshold fueron congelados "
+    "antes de utilizar el conjunto holdout."
 )
 
 
 # ------------------------------------------------------------
-# ROC y Precision-Recall desde predicciones reales
+# KPIs finales del holdout
+# ------------------------------------------------------------
+
+h1, h2, h3, h4 = st.columns(4)
+
+with h1:
+    st.metric(
+        "TP final",
+        numero(
+            fila_holdout[
+                "tp"
+            ]
+        )
+    )
+
+with h2:
+    st.metric(
+        "FN final",
+        numero(
+            fila_holdout[
+                "fn"
+            ]
+        )
+    )
+
+with h3:
+    st.metric(
+        "FP final",
+        numero(
+            fila_holdout[
+                "fp"
+            ]
+        )
+    )
+
+with h4:
+    st.metric(
+        "TN final",
+        numero(
+            fila_holdout[
+                "tn"
+            ]
+        )
+    )
+
+
+# ------------------------------------------------------------
+# Matriz final del holdout
+# ------------------------------------------------------------
+
+st.markdown(
+    "### Matriz de confusión final · Holdout"
+)
+
+fig_cm_holdout = crear_matriz_confusion(
+    tn=int(
+        fila_holdout[
+            "tn"
+        ]
+    ),
+    fp=int(
+        fila_holdout[
+            "fp"
+        ]
+    ),
+    fn=int(
+        fila_holdout[
+            "fn"
+        ]
+    ),
+    tp=int(
+        fila_holdout[
+            "tp"
+        ]
+    ),
+    titulo=(
+        "Matriz de confusión final · "
+        "Threshold 0.75"
+    )
+)
+
+st.plotly_chart(
+    fig_cm_holdout,
+    use_container_width=True
+)
+
+
+st.markdown(
+    f"""
+    <div class="method-box">
+
+    Esta es la matriz que representa
+    el <strong>resultado final de FinPredict</strong>
+    sobre datos no utilizados durante la selección
+    del modelo ni del threshold.
+
+    Se identificaron correctamente
+    <strong>
+    {int(fila_holdout['tp']):,}
+    </strong>
+    incumplimientos futuros,
+    mientras que
+    <strong>
+    {int(fila_holdout['fn']):,}
+    </strong>
+    no fueron detectados.
+
+    La cartera priorizada fue de
+    <strong>
+    {int(fila_holdout['casos_priorizados']):,}
+    </strong>
+    créditos,
+    equivalente al
+    <strong>
+    {fila_holdout['porcentaje_priorizado']:.2%}
+    </strong>
+    del holdout.
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# ------------------------------------------------------------
+# ROC y Precision-Recall
 # ------------------------------------------------------------
 
 y_real = df_predicciones[
@@ -821,7 +1084,6 @@ y_prob = df_predicciones[
 ]
 
 
-# ROC
 fpr, tpr, _ = roc_curve(
     y_real,
     y_prob
@@ -833,7 +1095,6 @@ roc_auc = roc_auc_score(
 )
 
 
-# Precision-Recall
 precision_curve, recall_curve, _ = (
     precision_recall_curve(
         y_real,
@@ -886,9 +1147,15 @@ with col_roc:
     )
 
     fig_roc.update_layout(
-        title="Curva ROC · Holdout final",
-        xaxis_title="Tasa de falsos positivos",
-        yaxis_title="Tasa de verdaderos positivos",
+        title=(
+            "Curva ROC · Holdout final"
+        ),
+        xaxis_title=(
+            "Tasa de falsos positivos"
+        ),
+        yaxis_title=(
+            "Tasa de verdaderos positivos"
+        ),
         template="plotly_white",
         height=450
     )
@@ -929,7 +1196,10 @@ with col_pr:
     )
 
     fig_pr.update_layout(
-        title="Curva Precision-Recall · Holdout final",
+        title=(
+            "Curva Precision-Recall · "
+            "Holdout final"
+        ),
         xaxis_title="Recall",
         yaxis_title="Precision",
         template="plotly_white",
@@ -946,20 +1216,29 @@ st.markdown(
     f"""
     <div class="executive-box">
 
-    <strong>Generalización final</strong><br><br>
+    <strong>
+    Generalización final
+    </strong><br><br>
 
     ROC-AUC:
-    <strong>{roc_auc:.4f}</strong><br>
+    <strong>
+    {roc_auc:.4f}
+    </strong><br>
 
     PR-AUC:
-    <strong>{pr_auc:.4f}</strong><br>
+    <strong>
+    {pr_auc:.4f}
+    </strong><br>
 
     Baseline PR-AUC:
-    <strong>{prevalencia:.4f}</strong><br><br>
+    <strong>
+    {prevalencia:.4f}
+    </strong><br><br>
 
-    Los resultados del holdout son consistentes con la
-    evidencia OOF, lo que indica estabilidad temporal
-    en el escenario sintético evaluado.
+    Los resultados del holdout son consistentes
+    con la evidencia OOF, lo que indica
+    estabilidad temporal en el escenario
+    sintético evaluado.
 
     </div>
     """,
@@ -974,27 +1253,31 @@ st.divider()
 # 14. SIMULACIÓN A/B
 # ============================================================
 
-st.markdown("## 5. Simulación A/B e impacto operativo")
+st.markdown(
+    "## 5. Simulación A/B e impacto operativo"
+)
 
 st.write(
-    "Simulación académica utilizada para ilustrar cómo podría "
-    "evaluarse una intervención preventiva basada en FinPredict."
+    "Simulación académica utilizada para ilustrar "
+    "cómo podría evaluarse una intervención preventiva "
+    "basada en FinPredict."
 )
 
 
-# ------------------------------------------------------------
-# Preparar tasas
-# ------------------------------------------------------------
-
 df_ab_plot = df_ab.copy()
 
-if "tasa_incumplimiento_%" in df_ab_plot.columns:
+if (
+    "tasa_incumplimiento_%"
+    in df_ab_plot.columns
+):
 
     df_ab_plot[
         "tasa_grafica"
-    ] = df_ab_plot[
-        "tasa_incumplimiento_%"
-    ]
+    ] = (
+        df_ab_plot[
+            "tasa_incumplimiento_%"
+        ]
+    )
 
 else:
 
@@ -1025,9 +1308,13 @@ fig_ab.update_traces(
 )
 
 fig_ab.update_layout(
-    title="Tasa de incumplimiento por grupo",
+    title=(
+        "Tasa de incumplimiento por grupo"
+    ),
     xaxis_title="",
-    yaxis_title="Tasa de incumplimiento",
+    yaxis_title=(
+        "Tasa de incumplimiento"
+    ),
     yaxis=dict(
         ticksuffix="%"
     ),
@@ -1043,7 +1330,7 @@ st.plotly_chart(
 
 
 # ------------------------------------------------------------
-# Chi-cuadrada desde resultados agregados
+# Chi-cuadrada
 # ------------------------------------------------------------
 
 tabla_ab = []
@@ -1051,12 +1338,18 @@ tabla_ab = []
 for _, fila in df_ab.iterrows():
 
     incumple = int(
-        fila["incumplimientos"]
+        fila[
+            "incumplimientos"
+        ]
     )
 
     no_incumple = int(
-        fila["creditos"]
-        - fila["incumplimientos"]
+        fila[
+            "creditos"
+        ]
+        - fila[
+            "incumplimientos"
+        ]
     )
 
     tabla_ab.append(
@@ -1099,7 +1392,9 @@ with a3:
 # Impacto operativo
 # ------------------------------------------------------------
 
-st.markdown("### Impacto operativo simulado")
+st.markdown(
+    "### Impacto operativo simulado"
+)
 
 st.dataframe(
     df_impacto,
@@ -1112,16 +1407,20 @@ st.markdown(
     """
     <div class="method-box">
 
-    <strong>Advertencia metodológica.</strong><br><br>
+    <strong>
+    Advertencia metodológica.
+    </strong><br><br>
 
-    La prueba A/B es una simulación académica construida bajo
-    un supuesto de efectividad de intervención.
+    La prueba A/B es una simulación académica
+    construida bajo un supuesto de efectividad
+    de intervención.
 
-    El p-value obtenido no constituye evidencia de que FinPredict
-    genere este impacto en producción.
+    El p-value obtenido no constituye evidencia
+    de que FinPredict genere este impacto
+    en producción.
 
-    El efecto causal deberá validarse mediante un experimento
-    controlado real.
+    El efecto causal deberá validarse mediante
+    un experimento controlado real.
 
     </div>
     """,
@@ -1136,7 +1435,9 @@ st.divider()
 # 15. RECOMENDACIÓN FINAL
 # ============================================================
 
-st.markdown("## 6. Recomendación")
+st.markdown(
+    "## 6. Recomendación"
+)
 
 st.markdown(
     """
@@ -1146,24 +1447,44 @@ st.markdown(
     GO condicionado para piloto controlado
     </strong><br><br>
 
-    La evidencia técnica respalda avanzar a una validación
-    operativa controlada.
+    La evidencia técnica respalda avanzar
+    a una validación operativa controlada.
 
     FinPredict presenta:
 
     <ul>
-        <li>estabilidad entre validación temporal y holdout;</li>
-        <li>desempeño superior al baseline;</li>
-        <li>un threshold operacionalmente defendible;</li>
-        <li>capacidad de priorizar una fracción reducida de la cartera;</li>
-        <li>evidencia estadística favorable en PR-AUC.</li>
+        <li>
+        estabilidad entre validación temporal
+        y holdout;
+        </li>
+
+        <li>
+        desempeño superior al baseline;
+        </li>
+
+        <li>
+        un threshold operacionalmente defendible;
+        </li>
+
+        <li>
+        capacidad de priorizar una fracción
+        reducida de la cartera;
+        </li>
+
+        <li>
+        evidencia estadística favorable
+        en PR-AUC.
+        </li>
     </ul>
 
-    El modelo debe emplearse como herramienta de
-    <strong>priorización preventiva con supervisión humana</strong>.
+    El modelo debe emplearse como herramienta
+    de <strong>
+    priorización preventiva con supervisión humana
+    </strong>.
 
-    No se recomienda utilizarlo para rechazos de crédito,
-    modificaciones contractuales o decisiones adversas automáticas.
+    No se recomienda utilizarlo para rechazos
+    de crédito, modificaciones contractuales
+    o decisiones adversas automáticas.
 
     </div>
     """,
@@ -1248,12 +1569,14 @@ st.markdown(
     """
     <div class="fin-footer">
 
-    FinComercial, S.A. | FinPredict |
+    FinComercial, S.A. |
+    FinPredict |
     Gestión de Proyectos de Inteligencia Artificial |
-    Actividad 6<br>
+    Actividad 6<br><br>
 
     Datos sintéticos con fines académicos.
-    Los resultados no representan decisiones reales sobre clientes.
+    Los resultados no representan decisiones reales
+    sobre clientes.
 
     </div>
     """,
