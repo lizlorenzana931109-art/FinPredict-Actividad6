@@ -1,155 +1,391 @@
-import streamlit as st
-import pandas as pd
+# ============================================================
+# FINPREDICT | ACTIVIDAD 6
+# TABLERO EJECUTIVO DE EVALUACIÓN Y VALIDACIÓN
+# ============================================================
+
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
+
+from scipy.stats import chi2_contingency
+from sklearn.metrics import (
+    roc_curve,
+    precision_recall_curve,
+    roc_auc_score,
+    average_precision_score
+)
+
+
 # ============================================================
-# FINPREDICT | TABLERO EJECUTIVO
-# PASO 1 - CARGA DE RESULTADOS
+# 1. CONFIGURACIÓN GENERAL
 # ============================================================
 
 st.set_page_config(
     page_title="FinPredict | Actividad 6",
     page_icon="📊",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# ------------------------------------------------------------
-# Rutas del proyecto
-# ------------------------------------------------------------
+
+# ============================================================
+# 2. BRANDING FINPREDICT
+# ============================================================
+
+NAVY = "#102A43"
+NAVY_2 = "#173F5F"
+TEAL = "#1FB5AD"
+TEAL_LIGHT = "#E7F7F5"
+LIGHT = "#F5F8FA"
+GRAY = "#6B7C93"
+BORDER = "#D9E2EC"
+WHITE = "#FFFFFF"
+
+
+st.markdown(
+    f"""
+    <style>
+
+    /* Fondo general */
+    .stApp {{
+        background-color: {WHITE};
+    }}
+
+    /* Contenedor principal */
+    .block-container {{
+        padding-top: 1.6rem;
+        padding-bottom: 3rem;
+        max-width: 1500px;
+    }}
+
+    /* Tipografía */
+    h1, h2, h3 {{
+        color: {NAVY};
+        font-family: Arial, Helvetica, sans-serif;
+    }}
+
+    p, div, span {{
+        font-family: Arial, Helvetica, sans-serif;
+    }}
+
+    /* Ocultar elementos de Streamlit */
+    #MainMenu {{
+        visibility: hidden;
+    }}
+
+    footer {{
+        visibility: hidden;
+    }}
+
+    /* Encabezado principal */
+    .fin-header {{
+        border-top: 4px solid {TEAL};
+        border-bottom: 1px solid {BORDER};
+        padding: 18px 0 22px 0;
+        margin-bottom: 22px;
+    }}
+
+    .fin-kicker {{
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: .8px;
+        color: {TEAL};
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }}
+
+    .fin-title {{
+        font-size: 38px;
+        line-height: 1.1;
+        font-weight: 750;
+        color: {NAVY};
+        margin-bottom: 8px;
+    }}
+
+    .fin-subtitle {{
+        font-size: 17px;
+        color: {GRAY};
+        line-height: 1.5;
+    }}
+
+    /* Caja ejecutiva */
+    .executive-box {{
+        background-color: {TEAL_LIGHT};
+        border-left: 7px solid {TEAL};
+        padding: 18px 20px;
+        border-radius: 5px;
+        margin: 14px 0 22px 0;
+        color: {NAVY};
+    }}
+
+    /* Nota metodológica */
+    .method-box {{
+        background-color: #F0F4F8;
+        border: 1px solid {BORDER};
+        padding: 15px 18px;
+        border-radius: 8px;
+        color: {NAVY};
+        margin-top: 10px;
+    }}
+
+    /* KPI cards */
+    [data-testid="stMetric"] {{
+        background-color: {LIGHT};
+        border: 1px solid {BORDER};
+        padding: 16px 18px;
+        border-radius: 8px;
+        min-height: 120px;
+    }}
+
+    [data-testid="stMetricLabel"] {{
+        color: {GRAY};
+        font-weight: 600;
+    }}
+
+    [data-testid="stMetricValue"] {{
+        color: {NAVY};
+        font-weight: 750;
+    }}
+
+    /* Dataframes */
+    [data-testid="stDataFrame"] {{
+        border: 1px solid {BORDER};
+        border-radius: 8px;
+    }}
+
+    /* Separadores */
+    hr {{
+        border: none;
+        height: 1px;
+        background: {BORDER};
+        margin: 32px 0;
+    }}
+
+    /* Footer */
+    .fin-footer {{
+        margin-top: 35px;
+        padding-top: 14px;
+        border-top: 1px solid {BORDER};
+        color: {GRAY};
+        font-size: 12px;
+    }}
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# 3. RUTAS DEL PROYECTO
+# ============================================================
 
 RUTA_DASHBOARD = Path(__file__).resolve().parent
 RUTA_PROYECTO = RUTA_DASHBOARD.parent
 RUTA_RESULTADOS = RUTA_PROYECTO / "resultados"
 
-# ------------------------------------------------------------
-# Encabezado
-# ------------------------------------------------------------
 
-st.title("FinPredict")
-st.subheader("Tablero ejecutivo de evaluación y validación")
+# ============================================================
+# 4. FUNCIONES AUXILIARES
+# ============================================================
 
-st.write(
-    "Resultados de la Actividad 6 para la evaluación "
-    "de modelos de riesgo hipotecario."
+@st.cache_data
+def cargar_csv(nombre_archivo):
+    ruta = RUTA_RESULTADOS / nombre_archivo
+
+    if not ruta.exists():
+        st.error(
+            f"No se encontró el archivo: resultados/{nombre_archivo}"
+        )
+        st.stop()
+
+    return pd.read_csv(ruta)
+
+
+def porcentaje(valor):
+    return f"{valor:.2%}"
+
+
+def numero(valor):
+    return f"{int(valor):,}"
+
+
+# ============================================================
+# 5. CARGA DE RESULTADOS
+# ============================================================
+
+df_resumen = cargar_csv(
+    "resumen_ejecutivo.csv"
 )
 
-# ------------------------------------------------------------
-# Cargar resultados reales
-# ------------------------------------------------------------
-
-df_resumen = pd.read_csv(
-    RUTA_RESULTADOS / "resumen_ejecutivo.csv"
+df_holdout = cargar_csv(
+    "metricas_holdout_final.csv"
 )
 
-df_holdout = pd.read_csv(
-    RUTA_RESULTADOS / "metricas_holdout_final.csv"
+df_threshold = cargar_csv(
+    "analisis_threshold.csv"
 )
 
-df_threshold = pd.read_csv(
-    RUTA_RESULTADOS / "analisis_threshold.csv"
+df_cv = cargar_csv(
+    "validacion_cruzada_temporal.csv"
 )
 
-# ------------------------------------------------------------
-# Verificación visual
-# ------------------------------------------------------------
-
-st.success(
-    "Datos cargados correctamente desde el repositorio."
+df_bootstrap = cargar_csv(
+    "comparacion_estadistica_bootstrap.csv"
 )
 
-# ------------------------------------------------------------
-# KPIs principales
-# ------------------------------------------------------------
+df_predicciones = cargar_csv(
+    "predicciones_holdout_final.csv"
+)
 
-st.markdown("## Resumen ejecutivo")
+df_ab = cargar_csv(
+    "simulacion_ab.csv"
+)
+
+df_impacto = cargar_csv(
+    "impacto_operativo_simulado.csv"
+)
+
+
+# ============================================================
+# 6. ENCABEZADO
+# ============================================================
+
+st.markdown(
+    """
+    <div class="fin-header">
+        <div class="fin-kicker">
+            FINCOMERCIAL, S.A. · FINPREDICT · ACTIVIDAD 6
+        </div>
+
+        <div class="fin-title">
+            Tablero ejecutivo de evaluación y validación
+        </div>
+
+        <div class="fin-subtitle">
+            Evaluación del modelo de riesgo hipotecario mediante
+            validación temporal, análisis estadístico, ajuste de
+            threshold, holdout independiente y simulación A/B.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# 7. DECISIÓN EJECUTIVA
+# ============================================================
+
+st.markdown(
+    """
+    <div class="executive-box">
+
+    <strong>Decisión ejecutiva · Regresión Logística</strong><br><br>
+
+    Modelo seleccionado mediante validación cruzada temporal y
+    comparación estadística.
+
+    <strong>Threshold operativo: 0.75.</strong>
+
+    La selección busca equilibrar capacidad de detección,
+    interpretabilidad y volumen operativo de alertas preventivas.
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# 8. RESUMEN EJECUTIVO
+# ============================================================
+
+st.markdown("## 1. Resumen ejecutivo")
 
 fila_holdout = df_holdout.iloc[0]
 
-col1, col2, col3 = st.columns(3)
+c1, c2, c3 = st.columns(3)
 
-with col1:
+with c1:
     st.metric(
         "ROC-AUC",
         f"{fila_holdout['roc_auc']:.4f}"
     )
 
-with col2:
+with c2:
     st.metric(
         "PR-AUC",
         f"{fila_holdout['pr_auc']:.4f}"
     )
 
-with col3:
+with c3:
     st.metric(
         "Recall",
-        f"{fila_holdout['recall']:.2%}"
+        porcentaje(fila_holdout["recall"])
     )
 
-col4, col5, col6 = st.columns(3)
+c4, c5, c6 = st.columns(3)
 
-with col4:
+with c4:
     st.metric(
         "Precision",
-        f"{fila_holdout['precision']:.2%}"
+        porcentaje(fila_holdout["precision"])
     )
 
-with col5:
+with c5:
     st.metric(
         "F1-score",
-        f"{fila_holdout['f1']:.2%}"
+        porcentaje(fila_holdout["f1"])
     )
 
-with col6:
+with c6:
     st.metric(
         "Cartera priorizada",
-        f"{fila_holdout['porcentaje_priorizado']:.2%}"
+        porcentaje(
+            fila_holdout["porcentaje_priorizado"]
+        )
     )
 
-# ------------------------------------------------------------
-# Decisión del modelo
-# ------------------------------------------------------------
 
-st.markdown("## Decisión del modelo")
+st.markdown(
+    f"""
+    <div class="method-box">
 
-st.info(
-    """
-    **Modelo seleccionado:** Regresión Logística  
-    **Threshold operativo:** 0.75  
+    En el holdout final, FinPredict prioriza
+    <strong>{numero(fila_holdout['casos_priorizados'])} créditos</strong>
+    de una cartera de 33,603 observaciones.
 
-    El modelo fue seleccionado considerando desempeño en PR-AUC,
-    estabilidad temporal, interpretabilidad y equilibrio entre
-    detección de riesgo y capacidad operativa.
-    """
+    El modelo identifica
+    <strong>{numero(fila_holdout['tp'])} incumplimientos futuros</strong>
+    y mantiene una especificidad de
+    <strong>{porcentaje(fila_holdout['specificity'])}</strong>.
+
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
-# ------------------------------------------------------------
-# Comparación de modelos
-# ------------------------------------------------------------
 
-# ------------------------------------------------------------
-# Comparación de modelos - Validación cruzada temporal
-# ------------------------------------------------------------
+st.divider()
 
-st.markdown("## Comparación de modelos")
 
-df_cv = pd.read_csv(
-    RUTA_RESULTADOS / "validacion_cruzada_temporal.csv"
-)
+# ============================================================
+# 9. COMPARACIÓN DE MODELOS
+# ============================================================
 
-df_bootstrap = pd.read_csv(
-    RUTA_RESULTADOS / "comparacion_estadistica_bootstrap.csv"
-)
+st.markdown("## 2. Comparación de modelos")
 
 st.write(
     "Desempeño promedio de Regresión Logística y Random Forest "
     "durante la validación cruzada temporal."
 )
 
-# ------------------------------------------------------------
-# Resumen promedio por modelo
-# ------------------------------------------------------------
-
-columnas_metricas = [
+metricas_cv = [
     "precision",
     "recall",
     "specificity",
@@ -160,13 +396,12 @@ columnas_metricas = [
 
 df_comparacion_cv = (
     df_cv
-    .groupby("modelo")[columnas_metricas]
+    .groupby("modelo")[metricas_cv]
     .mean()
     .reset_index()
 )
 
-# Formato visual
-df_comparacion_visual = df_comparacion_cv.copy()
+df_cv_tabla = df_comparacion_cv.copy()
 
 for columna in [
     "precision",
@@ -174,20 +409,21 @@ for columna in [
     "specificity",
     "f1"
 ]:
-    df_comparacion_visual[columna] = (
-        df_comparacion_visual[columna] * 100
-    ).map("{:.2f}%".format)
+    df_cv_tabla[columna] = (
+        df_cv_tabla[columna]
+        .map(lambda x: f"{x:.2%}")
+    )
 
 for columna in [
     "roc_auc",
     "pr_auc"
 ]:
-    df_comparacion_visual[columna] = (
-        df_comparacion_visual[columna]
-        .map("{:.4f}".format)
+    df_cv_tabla[columna] = (
+        df_cv_tabla[columna]
+        .map(lambda x: f"{x:.4f}")
     )
 
-df_comparacion_visual.columns = [
+df_cv_tabla.columns = [
     "Modelo",
     "Precision",
     "Recall",
@@ -198,14 +434,74 @@ df_comparacion_visual.columns = [
 ]
 
 st.dataframe(
-    df_comparacion_visual,
+    df_cv_tabla,
     use_container_width=True,
     hide_index=True
 )
 
+
 # ------------------------------------------------------------
-# Comparación estadística
+# Gráfico comparativo
 # ------------------------------------------------------------
+
+df_plot_modelos = (
+    df_comparacion_cv[
+        [
+            "modelo",
+            "recall",
+            "f1",
+            "pr_auc"
+        ]
+    ]
+    .melt(
+        id_vars="modelo",
+        var_name="Métrica",
+        value_name="Valor"
+    )
+)
+
+nombres_metricas = {
+    "recall": "Recall",
+    "f1": "F1",
+    "pr_auc": "PR-AUC"
+}
+
+df_plot_modelos["Métrica"] = (
+    df_plot_modelos["Métrica"]
+    .map(nombres_metricas)
+)
+
+fig_modelos = px.bar(
+    df_plot_modelos,
+    x="Métrica",
+    y="Valor",
+    color="modelo",
+    barmode="group",
+    text_auto=".3f",
+    color_discrete_sequence=[
+        NAVY,
+        TEAL
+    ]
+)
+
+fig_modelos.update_layout(
+    title="Comparación de desempeño en validación temporal",
+    xaxis_title="",
+    yaxis_title="Valor",
+    legend_title="Modelo",
+    height=430,
+    template="plotly_white"
+)
+
+st.plotly_chart(
+    fig_modelos,
+    use_container_width=True
+)
+
+
+# ============================================================
+# 10. COMPARACIÓN ESTADÍSTICA
+# ============================================================
 
 st.markdown("### Comparación estadística")
 
@@ -213,95 +509,753 @@ fila_pr = df_bootstrap[
     df_bootstrap["metrica"] == "PR-AUC"
 ].iloc[0]
 
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric(
-        "Δ PR-AUC",
-        f"{fila_pr['diferencia_media']:.4f}"
-    )
-
-with col2:
-    st.metric(
-        "IC 95% inferior",
-        f"{fila_pr['IC_95_inf']:.4f}"
-    )
-
-with col3:
-    st.metric(
-        "IC 95% superior",
-        f"{fila_pr['IC_95_sup']:.4f}"
-    )
-
-st.success(
-    """
-    **Resultado:** la Regresión Logística presentó una ventaja
-    consistente en PR-AUC frente a Random Forest.
-
-    El intervalo de confianza del 95% de la diferencia no incluye
-    cero, lo que respalda la selección del modelo en una métrica
-    especialmente relevante para una clase positiva poco frecuente.
-    """
-)
-
-# ------------------------------------------------------------
-# Evidencia estadística
-# ------------------------------------------------------------
-
-st.markdown("### Comparación estadística")
-
-fila_pr = df_bootstrap[
-    df_bootstrap["metrica"] == "PR-AUC"
+fila_roc = df_bootstrap[
+    df_bootstrap["metrica"] == "ROC-AUC"
 ].iloc[0]
 
-col1, col2, col3 = st.columns(3)
 
-with col1:
+b1, b2, b3 = st.columns(3)
+
+with b1:
     st.metric(
         "Δ PR-AUC",
         f"{fila_pr['diferencia_media']:.4f}"
     )
 
-with col2:
+with b2:
     st.metric(
         "IC 95% inferior",
         f"{fila_pr['IC_95_inf']:.4f}"
     )
 
-with col3:
+with b3:
     st.metric(
         "IC 95% superior",
         f"{fila_pr['IC_95_sup']:.4f}"
     )
 
-st.success(
-    """
-    La Regresión Logística mostró una ventaja consistente en PR-AUC.
-    El intervalo de confianza del 95% no incluye cero, lo que respalda
-    su selección frente a Random Forest para este problema.
-    """
+
+st.markdown(
+    f"""
+    <div class="executive-box">
+
+    <strong>Resultado estadístico</strong><br><br>
+
+    La diferencia de PR-AUC se calculó como:
+
+    <strong>Regresión Logística − Random Forest.</strong>
+
+    La diferencia media fue
+    <strong>{fila_pr['diferencia_media']:.4f}</strong>,
+    con IC95%
+    <strong>
+    [{fila_pr['IC_95_inf']:.4f},
+    {fila_pr['IC_95_sup']:.4f}]
+    </strong>.
+
+    Como el intervalo no contiene cero, la ventaja en PR-AUC
+    es consistente a favor de Regresión Logística.
+
+    Para ROC-AUC, el IC95% fue
+    <strong>
+    [{fila_roc['IC_95_inf']:.4f},
+    {fila_roc['IC_95_sup']:.4f}]
+    </strong>,
+    por lo que no se identifica una superioridad concluyente.
+
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
+
+st.divider()
+
+
+# ============================================================
+# 11. ANÁLISIS INTERACTIVO DE THRESHOLD
+# ============================================================
+
+st.markdown("## 3. Threshold y capacidad operativa")
+
+st.write(
+    "El threshold modifica el equilibrio entre detección de "
+    "incumplimientos y volumen de créditos enviados a intervención."
+)
+
+thresholds_disponibles = sorted(
+    df_threshold["threshold"].unique()
+)
+
+threshold_seleccionado = st.select_slider(
+    "Selecciona un threshold",
+    options=thresholds_disponibles,
+    value=0.75
+)
+
+fila_threshold = df_threshold[
+    np.isclose(
+        df_threshold["threshold"],
+        threshold_seleccionado
+    )
+].iloc[0]
+
+
+t1, t2, t3, t4 = st.columns(4)
+
+with t1:
+    st.metric(
+        "Precision",
+        porcentaje(
+            fila_threshold["precision"]
+        )
+    )
+
+with t2:
+    st.metric(
+        "Recall",
+        porcentaje(
+            fila_threshold["recall"]
+        )
+    )
+
+with t3:
+    st.metric(
+        "F1-score",
+        porcentaje(
+            fila_threshold["f1"]
+        )
+    )
+
+with t4:
+    st.metric(
+        "Cartera priorizada",
+        porcentaje(
+            fila_threshold[
+                "porcentaje_priorizado"
+            ]
+        )
+    )
+
+
 # ------------------------------------------------------------
-# Datos fuente
+# Curva threshold
 # ------------------------------------------------------------
 
-with st.expander("Ver resultados técnicos completos"):
-    
-    st.write("### Resumen ejecutivo")
+fig_threshold = go.Figure()
+
+fig_threshold.add_trace(
+    go.Scatter(
+        x=df_threshold["threshold"],
+        y=df_threshold["precision"],
+        mode="lines+markers",
+        name="Precision",
+        line=dict(color=NAVY)
+    )
+)
+
+fig_threshold.add_trace(
+    go.Scatter(
+        x=df_threshold["threshold"],
+        y=df_threshold["recall"],
+        mode="lines+markers",
+        name="Recall",
+        line=dict(color=TEAL)
+    )
+)
+
+fig_threshold.add_trace(
+    go.Scatter(
+        x=df_threshold["threshold"],
+        y=df_threshold["f1"],
+        mode="lines+markers",
+        name="F1",
+        line=dict(color="#7A6FF0")
+    )
+)
+
+fig_threshold.add_vline(
+    x=0.75,
+    line_dash="dash",
+    line_color=TEAL,
+    annotation_text="Threshold operativo 0.75",
+    annotation_position="top right"
+)
+
+fig_threshold.update_layout(
+    title="Trade-off entre métricas según threshold",
+    xaxis_title="Threshold",
+    yaxis_title="Valor",
+    yaxis=dict(
+        tickformat=".0%",
+        range=[0, 1]
+    ),
+    height=440,
+    template="plotly_white"
+)
+
+st.plotly_chart(
+    fig_threshold,
+    use_container_width=True
+)
+
+
+# ============================================================
+# 12. MATRIZ DE CONFUSIÓN DINÁMICA
+# ============================================================
+
+st.markdown("### Matriz de confusión")
+
+tn = int(fila_threshold["tn"])
+fp = int(fila_threshold["fp"])
+fn = int(fila_threshold["fn"])
+tp = int(fila_threshold["tp"])
+
+matriz = np.array([
+    [tn, fp],
+    [fn, tp]
+])
+
+textos = np.array([
+    [
+        f"TN<br>{tn:,}",
+        f"FP<br>{fp:,}"
+    ],
+    [
+        f"FN<br>{fn:,}",
+        f"TP<br>{tp:,}"
+    ]
+])
+
+fig_cm = go.Figure(
+    data=go.Heatmap(
+        z=matriz,
+        x=[
+            "Predicción: No incumplimiento",
+            "Predicción: Incumplimiento"
+        ],
+        y=[
+            "Real: No incumplimiento",
+            "Real: Incumplimiento"
+        ],
+        text=textos,
+        texttemplate="%{text}",
+        textfont=dict(
+            size=22
+        ),
+        colorscale=[
+            [0, "#EEF3F8"],
+            [1, TEAL]
+        ],
+        showscale=False
+    )
+)
+
+fig_cm.update_layout(
+    title=(
+        "Matriz de confusión · "
+        f"Threshold {threshold_seleccionado:.2f}"
+    ),
+    height=450,
+    template="plotly_white"
+)
+
+st.plotly_chart(
+    fig_cm,
+    use_container_width=True
+)
+
+
+st.markdown(
+    f"""
+    <div class="method-box">
+
+    Con threshold
+    <strong>{threshold_seleccionado:.2f}</strong>,
+    el modelo identifica
+    <strong>{tp:,}</strong>
+    incumplimientos y deja sin detectar
+    <strong>{fn:,}</strong>.
+
+    Se generan
+    <strong>{fp:,}</strong>
+    alertas preventivas adicionales y se priorizan
+    <strong>{int(fila_threshold['casos_priorizados']):,}</strong>
+    créditos, equivalentes al
+    <strong>
+    {fila_threshold['porcentaje_priorizado']:.2%}
+    </strong>
+    del universo analizado.
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+st.divider()
+
+
+# ============================================================
+# 13. HOLDOUT FINAL
+# ============================================================
+
+st.markdown("## 4. Evaluación final independiente")
+
+st.write(
+    "El modelo y el threshold fueron congelados antes de utilizar "
+    "el conjunto holdout."
+)
+
+
+# ------------------------------------------------------------
+# ROC y Precision-Recall desde predicciones reales
+# ------------------------------------------------------------
+
+y_real = df_predicciones[
+    "incumplimiento_90d"
+].astype(int)
+
+y_prob = df_predicciones[
+    "probabilidad_riesgo"
+]
+
+
+# ROC
+fpr, tpr, _ = roc_curve(
+    y_real,
+    y_prob
+)
+
+roc_auc = roc_auc_score(
+    y_real,
+    y_prob
+)
+
+
+# Precision-Recall
+precision_curve, recall_curve, _ = (
+    precision_recall_curve(
+        y_real,
+        y_prob
+    )
+)
+
+pr_auc = average_precision_score(
+    y_real,
+    y_prob
+)
+
+prevalencia = y_real.mean()
+
+
+col_roc, col_pr = st.columns(2)
+
+
+with col_roc:
+
+    fig_roc = go.Figure()
+
+    fig_roc.add_trace(
+        go.Scatter(
+            x=fpr,
+            y=tpr,
+            mode="lines",
+            name=(
+                f"Regresión Logística "
+                f"(AUC={roc_auc:.4f})"
+            ),
+            line=dict(
+                color=TEAL,
+                width=3
+            )
+        )
+    )
+
+    fig_roc.add_trace(
+        go.Scatter(
+            x=[0, 1],
+            y=[0, 1],
+            mode="lines",
+            name="Clasificador aleatorio",
+            line=dict(
+                color=GRAY,
+                dash="dash"
+            )
+        )
+    )
+
+    fig_roc.update_layout(
+        title="Curva ROC · Holdout final",
+        xaxis_title="Tasa de falsos positivos",
+        yaxis_title="Tasa de verdaderos positivos",
+        template="plotly_white",
+        height=450
+    )
+
+    st.plotly_chart(
+        fig_roc,
+        use_container_width=True
+    )
+
+
+with col_pr:
+
+    fig_pr = go.Figure()
+
+    fig_pr.add_trace(
+        go.Scatter(
+            x=recall_curve,
+            y=precision_curve,
+            mode="lines",
+            name=(
+                f"Regresión Logística "
+                f"(PR-AUC={pr_auc:.4f})"
+            ),
+            line=dict(
+                color=NAVY,
+                width=3
+            )
+        )
+    )
+
+    fig_pr.add_hline(
+        y=prevalencia,
+        line_dash="dash",
+        line_color=GRAY,
+        annotation_text=(
+            f"Baseline {prevalencia:.4f}"
+        )
+    )
+
+    fig_pr.update_layout(
+        title="Curva Precision-Recall · Holdout final",
+        xaxis_title="Recall",
+        yaxis_title="Precision",
+        template="plotly_white",
+        height=450
+    )
+
+    st.plotly_chart(
+        fig_pr,
+        use_container_width=True
+    )
+
+
+st.markdown(
+    f"""
+    <div class="executive-box">
+
+    <strong>Generalización final</strong><br><br>
+
+    ROC-AUC:
+    <strong>{roc_auc:.4f}</strong><br>
+
+    PR-AUC:
+    <strong>{pr_auc:.4f}</strong><br>
+
+    Baseline PR-AUC:
+    <strong>{prevalencia:.4f}</strong><br><br>
+
+    Los resultados del holdout son consistentes con la
+    evidencia OOF, lo que indica estabilidad temporal
+    en el escenario sintético evaluado.
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+st.divider()
+
+
+# ============================================================
+# 14. SIMULACIÓN A/B
+# ============================================================
+
+st.markdown("## 5. Simulación A/B e impacto operativo")
+
+st.write(
+    "Simulación académica utilizada para ilustrar cómo podría "
+    "evaluarse una intervención preventiva basada en FinPredict."
+)
+
+
+# ------------------------------------------------------------
+# Preparar tasas
+# ------------------------------------------------------------
+
+df_ab_plot = df_ab.copy()
+
+if "tasa_incumplimiento_%" in df_ab_plot.columns:
+
+    df_ab_plot[
+        "tasa_grafica"
+    ] = df_ab_plot[
+        "tasa_incumplimiento_%"
+    ]
+
+else:
+
+    df_ab_plot[
+        "tasa_grafica"
+    ] = (
+        df_ab_plot[
+            "tasa_incumplimiento"
+        ] * 100
+    )
+
+
+fig_ab = px.bar(
+    df_ab_plot,
+    x="grupo",
+    y="tasa_grafica",
+    text="tasa_grafica",
+    color="grupo",
+    color_discrete_sequence=[
+        NAVY,
+        TEAL
+    ]
+)
+
+fig_ab.update_traces(
+    texttemplate="%{text:.2f}%",
+    textposition="outside"
+)
+
+fig_ab.update_layout(
+    title="Tasa de incumplimiento por grupo",
+    xaxis_title="",
+    yaxis_title="Tasa de incumplimiento",
+    yaxis=dict(
+        ticksuffix="%"
+    ),
+    template="plotly_white",
+    height=430,
+    showlegend=False
+)
+
+st.plotly_chart(
+    fig_ab,
+    use_container_width=True
+)
+
+
+# ------------------------------------------------------------
+# Chi-cuadrada desde resultados agregados
+# ------------------------------------------------------------
+
+tabla_ab = []
+
+for _, fila in df_ab.iterrows():
+
+    incumple = int(
+        fila["incumplimientos"]
+    )
+
+    no_incumple = int(
+        fila["creditos"]
+        - fila["incumplimientos"]
+    )
+
+    tabla_ab.append(
+        [
+            no_incumple,
+            incumple
+        ]
+    )
+
+
+chi2, p_value, _, _ = (
+    chi2_contingency(
+        tabla_ab
+    )
+)
+
+
+a1, a2, a3 = st.columns(3)
+
+with a1:
+    st.metric(
+        "Chi-cuadrada",
+        f"{chi2:.4f}"
+    )
+
+with a2:
+    st.metric(
+        "p-value",
+        f"{p_value:.4f}"
+    )
+
+with a3:
+    st.metric(
+        "Créditos simulados",
+        f"{int(df_ab['creditos'].sum()):,}"
+    )
+
+
+# ------------------------------------------------------------
+# Impacto operativo
+# ------------------------------------------------------------
+
+st.markdown("### Impacto operativo simulado")
+
+st.dataframe(
+    df_impacto,
+    hide_index=True,
+    use_container_width=True
+)
+
+
+st.markdown(
+    """
+    <div class="method-box">
+
+    <strong>Advertencia metodológica.</strong><br><br>
+
+    La prueba A/B es una simulación académica construida bajo
+    un supuesto de efectividad de intervención.
+
+    El p-value obtenido no constituye evidencia de que FinPredict
+    genere este impacto en producción.
+
+    El efecto causal deberá validarse mediante un experimento
+    controlado real.
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+st.divider()
+
+
+# ============================================================
+# 15. RECOMENDACIÓN FINAL
+# ============================================================
+
+st.markdown("## 6. Recomendación")
+
+st.markdown(
+    """
+    <div class="executive-box">
+
+    <strong>
+    GO condicionado para piloto controlado
+    </strong><br><br>
+
+    La evidencia técnica respalda avanzar a una validación
+    operativa controlada.
+
+    FinPredict presenta:
+
+    <ul>
+        <li>estabilidad entre validación temporal y holdout;</li>
+        <li>desempeño superior al baseline;</li>
+        <li>un threshold operacionalmente defendible;</li>
+        <li>capacidad de priorizar una fracción reducida de la cartera;</li>
+        <li>evidencia estadística favorable en PR-AUC.</li>
+    </ul>
+
+    El modelo debe emplearse como herramienta de
+    <strong>priorización preventiva con supervisión humana</strong>.
+
+    No se recomienda utilizarlo para rechazos de crédito,
+    modificaciones contractuales o decisiones adversas automáticas.
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# 16. EVIDENCIA Y TRAZABILIDAD
+# ============================================================
+
+with st.expander(
+    "Ver evidencia técnica y archivos fuente"
+):
+
+    st.markdown(
+        "### Resumen ejecutivo"
+    )
+
     st.dataframe(
         df_resumen,
+        hide_index=True,
         use_container_width=True
     )
 
-    st.write("### Métricas del holdout final")
+    st.markdown(
+        "### Holdout final"
+    )
+
     st.dataframe(
         df_holdout,
+        hide_index=True,
         use_container_width=True
     )
 
-    st.write("### Análisis de threshold")
+    st.markdown(
+        "### Validación cruzada temporal"
+    )
+
     st.dataframe(
-        df_threshold,
+        df_cv,
+        hide_index=True,
         use_container_width=True
     )
+
+    st.markdown(
+        "### Análisis de threshold"
+    )
+
+    st.dataframe(
+        df_threshold,
+        hide_index=True,
+        use_container_width=True
+    )
+
+    st.markdown(
+        "### Comparación estadística"
+    )
+
+    st.dataframe(
+        df_bootstrap,
+        hide_index=True,
+        use_container_width=True
+    )
+
+    st.markdown(
+        "### Simulación A/B"
+    )
+
+    st.dataframe(
+        df_ab,
+        hide_index=True,
+        use_container_width=True
+    )
+
+
+# ============================================================
+# 17. PIE DE PÁGINA
+# ============================================================
+
+st.markdown(
+    """
+    <div class="fin-footer">
+
+    FinComercial, S.A. | FinPredict |
+    Gestión de Proyectos de Inteligencia Artificial |
+    Actividad 6<br>
+
+    Datos sintéticos con fines académicos.
+    Los resultados no representan decisiones reales sobre clientes.
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
