@@ -4,7 +4,6 @@
 # ============================================================
 
 from pathlib import Path
-from textwrap import dedent
 
 import numpy as np
 import pandas as pd
@@ -39,140 +38,84 @@ st.set_page_config(
 
 NAVY = "#102A43"
 TEAL = "#1FB5AD"
-TEAL_LIGHT = "#E7F7F5"
 LIGHT = "#F5F8FA"
 GRAY = "#6B7C93"
 BORDER = "#D9E2EC"
-WHITE = "#FFFFFF"
 
 
 st.markdown(
-    dedent(
-        f"""
-        <style>
+    f"""
+<style>
+.stApp {{
+    background-color: white;
+}}
 
-        .stApp {{
-            background-color: {WHITE};
-        }}
+.block-container {{
+    padding-top: 1.6rem;
+    padding-bottom: 3rem;
+    max-width: 1500px;
+}}
 
-        .block-container {{
-            padding-top: 1.6rem;
-            padding-bottom: 3rem;
-            max-width: 1500px;
-        }}
+h1, h2, h3 {{
+    color: {NAVY};
+    font-family: Arial, Helvetica, sans-serif;
+}}
 
-        h1, h2, h3 {{
-            color: {NAVY};
-            font-family: Arial, Helvetica, sans-serif;
-        }}
+[data-testid="stCaptionContainer"] {{
+    color: {TEAL};
+    font-weight: 700;
+    letter-spacing: .6px;
+}}
 
-        p, div, span {{
-            font-family: Arial, Helvetica, sans-serif;
-        }}
+[data-testid="stMetric"] {{
+    background-color: {LIGHT};
+    border: 1px solid {BORDER};
+    padding: 16px 18px;
+    border-radius: 8px;
+    min-height: 120px;
+}}
 
-        #MainMenu {{
-            visibility: hidden;
-        }}
+[data-testid="stMetricLabel"] {{
+    color: {GRAY};
+    font-weight: 600;
+}}
 
-        footer {{
-            visibility: hidden;
-        }}
+[data-testid="stMetricValue"] {{
+    color: {NAVY};
+    font-weight: 750;
+}}
 
-        .fin-header {{
-            border-top: 4px solid {TEAL};
-            border-bottom: 1px solid {BORDER};
-            padding: 18px 0 22px 0;
-            margin-bottom: 22px;
-        }}
+[data-testid="stDataFrame"] {{
+    border: 1px solid {BORDER};
+    border-radius: 8px;
+}}
 
-        .fin-kicker {{
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: .8px;
-            color: {TEAL};
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }}
+div[data-testid="stAlert"] {{
+    border-radius: 8px;
+}}
 
-        .fin-title {{
-            font-size: 38px;
-            line-height: 1.1;
-            font-weight: 750;
-            color: {NAVY};
-            margin-bottom: 8px;
-        }}
+hr {{
+    border: none;
+    height: 1px;
+    background: {BORDER};
+    margin: 32px 0;
+}}
 
-        .fin-subtitle {{
-            font-size: 17px;
-            color: {GRAY};
-            line-height: 1.5;
-        }}
+#MainMenu {{
+    visibility: hidden;
+}}
 
-        .executive-box {{
-            background-color: {TEAL_LIGHT};
-            border-left: 7px solid {TEAL};
-            padding: 18px 20px;
-            border-radius: 5px;
-            margin: 14px 0 22px 0;
-            color: {NAVY};
-        }}
-
-        .method-box {{
-            background-color: #F0F4F8;
-            border: 1px solid {BORDER};
-            padding: 15px 18px;
-            border-radius: 8px;
-            color: {NAVY};
-            margin-top: 10px;
-        }}
-
-        [data-testid="stMetric"] {{
-            background-color: {LIGHT};
-            border: 1px solid {BORDER};
-            padding: 16px 18px;
-            border-radius: 8px;
-            min-height: 120px;
-        }}
-
-        [data-testid="stMetricLabel"] {{
-            color: {GRAY};
-            font-weight: 600;
-        }}
-
-        [data-testid="stMetricValue"] {{
-            color: {NAVY};
-            font-weight: 750;
-        }}
-
-        [data-testid="stDataFrame"] {{
-            border: 1px solid {BORDER};
-            border-radius: 8px;
-        }}
-
-        hr {{
-            border: none;
-            height: 1px;
-            background: {BORDER};
-            margin: 32px 0;
-        }}
-
-        .fin-footer {{
-            margin-top: 35px;
-            padding-top: 14px;
-            border-top: 1px solid {BORDER};
-            color: {GRAY};
-            font-size: 12px;
-        }}
-
-        </style>
-        """
-    ).strip(),
+footer {{
+    visibility: hidden;
+}}
+</style>
+""",
     unsafe_allow_html=True
 )
 
 
 # ============================================================
-# 3. RUTAS DEL PROYECTO
+# 3. RUTAS
 # ============================================================
 
 RUTA_DASHBOARD = Path(__file__).resolve().parent
@@ -181,7 +124,7 @@ RUTA_RESULTADOS = RUTA_PROYECTO / "resultados"
 
 
 # ============================================================
-# 4. FUNCIONES AUXILIARES
+# 4. FUNCIONES
 # ============================================================
 
 @st.cache_data
@@ -190,7 +133,7 @@ def cargar_csv(nombre_archivo):
 
     if not ruta.exists():
         st.error(
-            f"No se encontró el archivo: resultados/{nombre_archivo}"
+            f"No se encontró resultados/{nombre_archivo}"
         )
         st.stop()
 
@@ -203,13 +146,6 @@ def porcentaje(valor):
 
 def numero(valor):
     return f"{int(valor):,}"
-
-
-def render_html(contenido):
-    st.markdown(
-        dedent(contenido).strip(),
-        unsafe_allow_html=True
-    )
 
 
 def crear_matriz_confusion(
@@ -270,6 +206,9 @@ def crear_matriz_confusion(
         )
     )
 
+    # Orden estándar:
+    # TN | FP
+    # FN | TP
     fig.update_yaxes(
         autorange="reversed"
     )
@@ -278,7 +217,7 @@ def crear_matriz_confusion(
 
 
 # ============================================================
-# 5. CARGA DE RESULTADOS
+# 5. CARGA DE DATOS
 # ============================================================
 
 df_resumen = cargar_csv(
@@ -318,59 +257,39 @@ df_impacto = cargar_csv(
 # 6. ENCABEZADO
 # ============================================================
 
-render_html(
-    """
-    <div class="fin-header">
-
-        <div class="fin-kicker">
-            FINCOMERCIAL, S.A. · FINPREDICT · ACTIVIDAD 6
-        </div>
-
-        <div class="fin-title">
-            Tablero ejecutivo de evaluación y validación
-        </div>
-
-        <div class="fin-subtitle">
-            Evaluación del modelo de riesgo hipotecario mediante
-            validación temporal, análisis estadístico, ajuste de
-            threshold, holdout independiente y simulación A/B.
-        </div>
-
-    </div>
-    """
+st.caption(
+    "FINCOMERCIAL, S.A. · FINPREDICT · ACTIVIDAD 6"
 )
+
+st.title(
+    "Tablero ejecutivo de evaluación y validación"
+)
+
+st.write(
+    "Evaluación del modelo de riesgo hipotecario mediante "
+    "validación temporal, análisis estadístico, ajuste de "
+    "threshold, holdout independiente y simulación A/B."
+)
+
+st.divider()
 
 
 # ============================================================
 # 7. DECISIÓN EJECUTIVA
 # ============================================================
 
-render_html(
+st.info(
     """
-    <div class="executive-box">
+### Decisión ejecutiva · Regresión Logística
 
-        <strong>
-            Decisión ejecutiva · Regresión Logística
-        </strong>
+Modelo seleccionado mediante **validación cruzada temporal**
+y **comparación estadística**.
 
-        <br><br>
+**Threshold operativo: 0.75**
 
-        Modelo seleccionado mediante validación cruzada temporal
-        y comparación estadística.
-
-        <br><br>
-
-        <strong>
-            Threshold operativo: 0.75.
-        </strong>
-
-        <br><br>
-
-        La selección busca equilibrar capacidad de detección,
-        interpretabilidad y volumen operativo de alertas preventivas.
-
-    </div>
-    """
+La selección busca equilibrar capacidad de detección,
+interpretabilidad y volumen operativo de alertas preventivas.
+"""
 )
 
 
@@ -435,29 +354,17 @@ with c6:
     )
 
 
-render_html(
+st.info(
     f"""
-    <div class="method-box">
+En el holdout final, FinPredict prioriza
+**{numero(fila_holdout['casos_priorizados'])} créditos**
+de una cartera de **33,603 observaciones**.
 
-        En el holdout final, FinPredict prioriza
-        <strong>
-            {numero(fila_holdout['casos_priorizados'])} créditos
-        </strong>
-        de una cartera de 33,603 observaciones.
-
-        <br><br>
-
-        El modelo identifica
-        <strong>
-            {numero(fila_holdout['tp'])} incumplimientos futuros
-        </strong>
-        y mantiene una especificidad de
-        <strong>
-            {porcentaje(fila_holdout['specificity'])}
-        </strong>.
-
-    </div>
-    """
+El modelo identifica
+**{numero(fila_holdout['tp'])} incumplimientos futuros**
+y mantiene una especificidad de
+**{porcentaje(fila_holdout['specificity'])}**.
+"""
 )
 
 
@@ -539,7 +446,7 @@ st.dataframe(
 
 
 # ------------------------------------------------------------
-# Gráfico comparativo
+# Gráfico de modelos
 # ------------------------------------------------------------
 
 df_plot_modelos = (
@@ -558,21 +465,15 @@ df_plot_modelos = (
     )
 )
 
-nombres_metricas = {
-    "recall": "Recall",
-    "f1": "F1",
-    "pr_auc": "PR-AUC"
-}
-
-df_plot_modelos[
-    "Métrica"
-] = (
+df_plot_modelos["Métrica"] = (
     df_plot_modelos[
         "Métrica"
     ]
-    .map(
-        nombres_metricas
-    )
+    .map({
+        "recall": "Recall",
+        "f1": "F1",
+        "pr_auc": "PR-AUC"
+    })
 )
 
 fig_modelos = px.bar(
@@ -648,51 +549,27 @@ with b3:
     )
 
 
-render_html(
+st.success(
     f"""
-    <div class="executive-box">
+### Resultado estadístico
 
-        <strong>
-            Resultado estadístico
-        </strong>
+La diferencia de PR-AUC se calculó como:
 
-        <br><br>
+**Regresión Logística − Random Forest**
 
-        La diferencia de PR-AUC se calculó como
-        <strong>
-            Regresión Logística − Random Forest.
-        </strong>
+Diferencia media:
+**{fila_pr['diferencia_media']:.4f}**
 
-        <br><br>
+IC95%:
+**[{fila_pr['IC_95_inf']:.4f}, {fila_pr['IC_95_sup']:.4f}]**
 
-        La diferencia media fue
-        <strong>
-            {fila_pr['diferencia_media']:.4f}
-        </strong>,
-        con IC95%
-        <strong>
-            [{fila_pr['IC_95_inf']:.4f},
-            {fila_pr['IC_95_sup']:.4f}]
-        </strong>.
+Como el intervalo no contiene cero, la ventaja en PR-AUC
+es consistente a favor de Regresión Logística.
 
-        <br><br>
-
-        Como el intervalo no contiene cero,
-        la ventaja en PR-AUC es consistente
-        a favor de Regresión Logística.
-
-        <br><br>
-
-        Para ROC-AUC, el IC95% fue
-        <strong>
-            [{fila_roc['IC_95_inf']:.4f},
-            {fila_roc['IC_95_sup']:.4f}]
-        </strong>,
-        por lo que no se identifica
-        una superioridad concluyente.
-
-    </div>
-    """
+Para ROC-AUC, el IC95% fue
+**[{fila_roc['IC_95_inf']:.4f}, {fila_roc['IC_95_sup']:.4f}]**,
+por lo que no se identifica una superioridad concluyente.
+"""
 )
 
 
@@ -700,7 +577,7 @@ st.divider()
 
 
 # ============================================================
-# 11. ANÁLISIS INTERACTIVO DE THRESHOLD
+# 11. THRESHOLD
 # ============================================================
 
 st.markdown(
@@ -741,9 +618,7 @@ with t1:
     st.metric(
         "Precision",
         porcentaje(
-            fila_threshold[
-                "precision"
-            ]
+            fila_threshold["precision"]
         )
     )
 
@@ -751,9 +626,7 @@ with t2:
     st.metric(
         "Recall",
         porcentaje(
-            fila_threshold[
-                "recall"
-            ]
+            fila_threshold["recall"]
         )
     )
 
@@ -761,9 +634,7 @@ with t3:
     st.metric(
         "F1-score",
         porcentaje(
-            fila_threshold[
-                "f1"
-            ]
+            fila_threshold["f1"]
         )
     )
 
@@ -777,10 +648,6 @@ with t4:
         )
     )
 
-
-# ------------------------------------------------------------
-# Curva threshold
-# ------------------------------------------------------------
 
 fig_threshold = go.Figure()
 
@@ -856,13 +723,12 @@ st.plotly_chart(
 # ============================================================
 
 st.markdown(
-    "### Matriz de confusión OOF · "
-    "Análisis de threshold"
+    "### Matriz de confusión OOF · Análisis de threshold"
 )
 
 st.caption(
-    "Esta matriz corresponde a las predicciones "
-    "out-of-fold utilizadas para seleccionar el threshold. "
+    "Esta matriz corresponde a las predicciones out-of-fold "
+    "utilizadas para seleccionar el threshold. "
     "La evaluación final independiente se presenta "
     "posteriormente sobre el holdout."
 )
@@ -883,7 +749,6 @@ tp_oof = int(
     fila_threshold["tp"]
 )
 
-
 fig_cm_oof = crear_matriz_confusion(
     tn=tn_oof,
     fp=fp_oof,
@@ -901,42 +766,18 @@ st.plotly_chart(
 )
 
 
-render_html(
+st.info(
     f"""
-    <div class="method-box">
+Con threshold **{threshold_seleccionado:.2f}**:
 
-        Con threshold
-        <strong>
-            {threshold_seleccionado:.2f}
-        </strong>,
-        el modelo identifica
-        <strong>
-            {tp_oof:,}
-        </strong>
-        incumplimientos y deja sin detectar
-        <strong>
-            {fn_oof:,}
-        </strong>.
-
-        <br><br>
-
-        Se generan
-        <strong>
-            {fp_oof:,}
-        </strong>
-        alertas preventivas adicionales
-        y se priorizan
-        <strong>
-            {int(fila_threshold['casos_priorizados']):,}
-        </strong>
-        créditos, equivalentes al
-        <strong>
-            {fila_threshold['porcentaje_priorizado']:.2%}
-        </strong>
-        del universo OOF analizado.
-
-    </div>
-    """
+- **{tp_oof:,}** incumplimientos identificados.
+- **{fn_oof:,}** incumplimientos no detectados.
+- **{fp_oof:,}** falsas alertas preventivas.
+- **{int(fila_threshold['casos_priorizados']):,} créditos**
+  priorizados.
+- **{fila_threshold['porcentaje_priorizado']:.2%}**
+  del universo OOF enviado a intervención.
+"""
 )
 
 
@@ -992,10 +833,6 @@ with h4:
     )
 
 
-# ------------------------------------------------------------
-# Matriz final del holdout
-# ------------------------------------------------------------
-
 st.markdown(
     "### Matriz de confusión final · Holdout"
 )
@@ -1025,50 +862,26 @@ st.plotly_chart(
 )
 
 
-render_html(
+st.info(
     f"""
-    <div class="method-box">
+Esta matriz representa el **resultado final de FinPredict**
+sobre datos no utilizados para seleccionar el modelo
+ni el threshold.
 
-        Esta es la matriz que representa
-        el <strong>
-            resultado final de FinPredict
-        </strong>
-        sobre datos no utilizados durante
-        la selección del modelo ni del threshold.
+- **TP:** {int(fila_holdout['tp']):,}
+- **FN:** {int(fila_holdout['fn']):,}
+- **FP:** {int(fila_holdout['fp']):,}
+- **TN:** {int(fila_holdout['tn']):,}
 
-        <br><br>
-
-        Se identificaron correctamente
-        <strong>
-            {int(fila_holdout['tp']):,}
-        </strong>
-        incumplimientos futuros,
-        mientras que
-        <strong>
-            {int(fila_holdout['fn']):,}
-        </strong>
-        no fueron detectados.
-
-        <br><br>
-
-        La cartera priorizada fue de
-        <strong>
-            {int(fila_holdout['casos_priorizados']):,}
-        </strong>
-        créditos,
-        equivalente al
-        <strong>
-            {fila_holdout['porcentaje_priorizado']:.2%}
-        </strong>
-        del holdout.
-
-    </div>
-    """
+Cartera priorizada:
+**{int(fila_holdout['casos_priorizados']):,} créditos**
+(**{fila_holdout['porcentaje_priorizado']:.2%}** del holdout).
+"""
 )
 
 
 # ------------------------------------------------------------
-# Curvas finales
+# ROC Y PR
 # ------------------------------------------------------------
 
 y_real = df_predicciones[
@@ -1089,7 +902,6 @@ roc_auc = roc_auc_score(
     y_real,
     y_prob
 )
-
 
 precision_curve, recall_curve, _ = (
     precision_recall_curve(
@@ -1191,8 +1003,7 @@ with col_pr:
 
     fig_pr.update_layout(
         title=(
-            "Curva Precision-Recall · "
-            "Holdout final"
+            "Curva Precision-Recall · Holdout final"
         ),
         xaxis_title="Recall",
         yaxis_title="Precision",
@@ -1206,44 +1017,19 @@ with col_pr:
     )
 
 
-render_html(
+st.success(
     f"""
-    <div class="executive-box">
+### Generalización final
 
-        <strong>
-            Generalización final
-        </strong>
+**ROC-AUC:** {roc_auc:.4f}
 
-        <br><br>
+**PR-AUC:** {pr_auc:.4f}
 
-        ROC-AUC:
-        <strong>
-            {roc_auc:.4f}
-        </strong>
+**Baseline PR-AUC:** {prevalencia:.4f}
 
-        <br><br>
-
-        PR-AUC:
-        <strong>
-            {pr_auc:.4f}
-        </strong>
-
-        <br><br>
-
-        Baseline PR-AUC:
-        <strong>
-            {prevalencia:.4f}
-        </strong>
-
-        <br><br>
-
-        Los resultados del holdout son consistentes
-        con la evidencia OOF, lo que indica
-        estabilidad temporal en el escenario
-        sintético evaluado.
-
-    </div>
-    """
+Los resultados del holdout son consistentes con la evidencia OOF,
+lo que indica estabilidad temporal en el escenario sintético evaluado.
+"""
 )
 
 
@@ -1330,10 +1116,6 @@ st.plotly_chart(
 )
 
 
-# ------------------------------------------------------------
-# Chi-cuadrada
-# ------------------------------------------------------------
-
 tabla_ab = []
 
 for _, fila in df_ab.iterrows():
@@ -1394,33 +1176,19 @@ st.dataframe(
 )
 
 
-render_html(
+st.warning(
     """
-    <div class="method-box">
+### Advertencia metodológica
 
-        <strong>
-            Advertencia metodológica.
-        </strong>
+La prueba A/B es una **simulación académica** construida
+bajo un supuesto de efectividad de intervención.
 
-        <br><br>
+El p-value obtenido **no constituye evidencia** de que
+FinPredict genere este impacto en producción.
 
-        La prueba A/B es una simulación académica
-        construida bajo un supuesto de efectividad
-        de intervención.
-
-        <br><br>
-
-        El p-value obtenido no constituye evidencia
-        de que FinPredict genere este impacto
-        en producción.
-
-        <br><br>
-
-        El efecto causal deberá validarse mediante
-        un experimento controlado real.
-
-    </div>
-    """
+El efecto causal deberá validarse mediante un
+experimento controlado real.
+"""
 )
 
 
@@ -1428,7 +1196,7 @@ st.divider()
 
 
 # ============================================================
-# 15. RECOMENDACIÓN FINAL
+# 15. RECOMENDACIÓN
 # ============================================================
 
 st.markdown(
@@ -1436,64 +1204,32 @@ st.markdown(
 )
 
 
-render_html(
+st.success(
     """
-    <div class="executive-box">
+### GO condicionado para piloto controlado
 
-        <strong>
-            GO condicionado para piloto controlado
-        </strong>
+La evidencia técnica respalda avanzar a una
+**validación operativa controlada**.
 
-        <br><br>
+FinPredict presenta:
 
-        La evidencia técnica respalda avanzar
-        a una validación operativa controlada.
+- estabilidad entre validación temporal y holdout;
+- desempeño superior al baseline;
+- un threshold operacionalmente defendible;
+- capacidad de priorizar una fracción reducida de la cartera;
+- evidencia estadística favorable en PR-AUC.
 
-        <br><br>
+El modelo debe emplearse como herramienta de
+**priorización preventiva con supervisión humana**.
 
-        FinPredict presenta:
-
-        <br><br>
-
-        &bull;&nbsp; estabilidad entre validación temporal y holdout;
-
-        <br><br>
-
-        &bull;&nbsp; desempeño superior al baseline;
-
-        <br><br>
-
-        &bull;&nbsp; un threshold operacionalmente defendible;
-
-        <br><br>
-
-        &bull;&nbsp; capacidad de priorizar una fracción reducida
-        de la cartera;
-
-        <br><br>
-
-        &bull;&nbsp; evidencia estadística favorable en PR-AUC.
-
-        <br><br>
-
-        El modelo debe emplearse como herramienta de
-        <strong>
-            priorización preventiva con supervisión humana
-        </strong>.
-
-        <br><br>
-
-        No se recomienda utilizarlo para rechazos de crédito,
-        modificaciones contractuales o decisiones adversas
-        automáticas.
-
-    </div>
-    """
+No se recomienda utilizarlo para rechazos de crédito,
+modificaciones contractuales o decisiones adversas automáticas.
+"""
 )
 
 
 # ============================================================
-# 16. EVIDENCIA Y TRAZABILIDAD
+# 16. EVIDENCIA
 # ============================================================
 
 with st.expander(
@@ -1562,24 +1298,17 @@ with st.expander(
 
 
 # ============================================================
-# 17. PIE DE PÁGINA
+# 17. PIE
 # ============================================================
 
-render_html(
-    """
-    <div class="fin-footer">
+st.divider()
 
-        FinComercial, S.A. |
-        FinPredict |
-        Gestión de Proyectos de Inteligencia Artificial |
-        Actividad 6
+st.caption(
+    "FinComercial, S.A. | FinPredict | "
+    "Gestión de Proyectos de Inteligencia Artificial | Actividad 6"
+)
 
-        <br><br>
-
-        Datos sintéticos con fines académicos.
-        Los resultados no representan decisiones reales
-        sobre clientes.
-
-    </div>
-    """
+st.caption(
+    "Datos sintéticos con fines académicos. "
+    "Los resultados no representan decisiones reales sobre clientes."
 )
