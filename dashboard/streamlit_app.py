@@ -126,10 +126,14 @@ st.info(
 # Comparación de modelos
 # ------------------------------------------------------------
 
+# ------------------------------------------------------------
+# Comparación de modelos - Validación cruzada temporal
+# ------------------------------------------------------------
+
 st.markdown("## Comparación de modelos")
 
-df_modelos = pd.read_csv(
-    RUTA_RESULTADOS / "comparacion_modelos.csv"
+df_cv = pd.read_csv(
+    RUTA_RESULTADOS / "validacion_cruzada_temporal.csv"
 )
 
 df_bootstrap = pd.read_csv(
@@ -137,13 +141,107 @@ df_bootstrap = pd.read_csv(
 )
 
 st.write(
-    "Comparación del desempeño de Regresión Logística "
-    "y Random Forest durante la validación."
+    "Desempeño promedio de Regresión Logística y Random Forest "
+    "durante la validación cruzada temporal."
 )
 
+# ------------------------------------------------------------
+# Resumen promedio por modelo
+# ------------------------------------------------------------
+
+columnas_metricas = [
+    "precision",
+    "recall",
+    "specificity",
+    "f1",
+    "roc_auc",
+    "pr_auc"
+]
+
+df_comparacion_cv = (
+    df_cv
+    .groupby("modelo")[columnas_metricas]
+    .mean()
+    .reset_index()
+)
+
+# Formato visual
+df_comparacion_visual = df_comparacion_cv.copy()
+
+for columna in [
+    "precision",
+    "recall",
+    "specificity",
+    "f1"
+]:
+    df_comparacion_visual[columna] = (
+        df_comparacion_visual[columna] * 100
+    ).map("{:.2f}%".format)
+
+for columna in [
+    "roc_auc",
+    "pr_auc"
+]:
+    df_comparacion_visual[columna] = (
+        df_comparacion_visual[columna]
+        .map("{:.4f}".format)
+    )
+
+df_comparacion_visual.columns = [
+    "Modelo",
+    "Precision",
+    "Recall",
+    "Specificity",
+    "F1",
+    "ROC-AUC",
+    "PR-AUC"
+]
+
 st.dataframe(
-    df_modelos,
-    use_container_width=True
+    df_comparacion_visual,
+    use_container_width=True,
+    hide_index=True
+)
+
+# ------------------------------------------------------------
+# Comparación estadística
+# ------------------------------------------------------------
+
+st.markdown("### Comparación estadística")
+
+fila_pr = df_bootstrap[
+    df_bootstrap["metrica"] == "PR-AUC"
+].iloc[0]
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric(
+        "Δ PR-AUC",
+        f"{fila_pr['diferencia_media']:.4f}"
+    )
+
+with col2:
+    st.metric(
+        "IC 95% inferior",
+        f"{fila_pr['IC_95_inf']:.4f}"
+    )
+
+with col3:
+    st.metric(
+        "IC 95% superior",
+        f"{fila_pr['IC_95_sup']:.4f}"
+    )
+
+st.success(
+    """
+    **Resultado:** la Regresión Logística presentó una ventaja
+    consistente en PR-AUC frente a Random Forest.
+
+    El intervalo de confianza del 95% de la diferencia no incluye
+    cero, lo que respalda la selección del modelo en una métrica
+    especialmente relevante para una clase positiva poco frecuente.
+    """
 )
 
 # ------------------------------------------------------------
