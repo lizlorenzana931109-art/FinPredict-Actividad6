@@ -1,19 +1,35 @@
-## 🚀 Dashboard interactivo
+# Dashboard — FinPredict Actividad 6
 
-La evaluación y validación de FinPredict puede explorarse mediante el tablero interactivo desarrollado en Streamlit:
+Tablero ejecutivo interactivo desarrollado en Streamlit para visualizar los resultados de evaluación y validación de FinPredict.
 
-👉 **[Abrir dashboard FinPredict](https://finpredict-actividad6-m8fgl8qd4gduyk4kgs3mwk.streamlit.app/)**
+## Aplicación desplegada
 
-El tablero integra los resultados reales generados durante la Actividad 6, incluyendo:
+👉 **[Abrir FinPredict Dashboard](https://finpredict-actividad6-m8fgl8qd4gduyk4kgs3mwk.streamlit.app/)**
 
-- métricas del modelo seleccionado;
-- comparación entre Regresión Logística y Random Forest;
-- validación cruzada temporal;
-- comparación estadística mediante bootstrap;
-- análisis interactivo de threshold;
-- matrices de confusión OOF y holdout;
+## Fuente de datos
+
+La aplicación consume directamente los archivos generados por el notebook de evaluación y almacenados en:
+
+`../resultados/`
+
+## Archivos principales
+
+- `streamlit_app.py`: aplicación principal.
+- `requirements.txt`: dependencias necesarias para el despliegue.
+
+## Alcance
+
+El tablero presenta:
+
+- resumen ejecutivo;
+- comparación de modelos;
+- validación estadística;
+- análisis de threshold;
+- matrices de confusión;
+- evaluación final holdout;
 - curvas ROC y Precision-Recall;
 - simulación A/B;
-- impacto operativo estimado.
+- impacto operativo;
+- recomendación ejecutiva.
 
-> El dashboard consume los archivos de resultados generados por el notebook y almacenados en la carpeta `resultados/`.
+Los datos son sintéticos y se utilizan exclusivamente con fines académicos.
