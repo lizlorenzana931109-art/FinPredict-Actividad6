@@ -123,6 +123,68 @@ st.info(
 )
 
 # ------------------------------------------------------------
+# Comparación de modelos
+# ------------------------------------------------------------
+
+st.markdown("## Comparación de modelos")
+
+df_modelos = pd.read_csv(
+    RUTA_RESULTADOS / "comparacion_modelos.csv"
+)
+
+df_bootstrap = pd.read_csv(
+    RUTA_RESULTADOS / "comparacion_estadistica_bootstrap.csv"
+)
+
+st.write(
+    "Comparación del desempeño de Regresión Logística "
+    "y Random Forest durante la validación."
+)
+
+st.dataframe(
+    df_modelos,
+    use_container_width=True
+)
+
+# ------------------------------------------------------------
+# Evidencia estadística
+# ------------------------------------------------------------
+
+st.markdown("### Comparación estadística")
+
+fila_pr = df_bootstrap[
+    df_bootstrap["metrica"] == "PR-AUC"
+].iloc[0]
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric(
+        "Δ PR-AUC",
+        f"{fila_pr['diferencia_media']:.4f}"
+    )
+
+with col2:
+    st.metric(
+        "IC 95% inferior",
+        f"{fila_pr['IC_95_inf']:.4f}"
+    )
+
+with col3:
+    st.metric(
+        "IC 95% superior",
+        f"{fila_pr['IC_95_sup']:.4f}"
+    )
+
+st.success(
+    """
+    La Regresión Logística mostró una ventaja consistente en PR-AUC.
+    El intervalo de confianza del 95% no incluye cero, lo que respalda
+    su selección frente a Random Forest para este problema.
+    """
+)
+
+# ------------------------------------------------------------
 # Datos fuente
 # ------------------------------------------------------------
 
